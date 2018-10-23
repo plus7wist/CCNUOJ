@@ -1,0 +1,19 @@
+1. 安装 virtualenv （如果没有安装的话）。
+
+2. 激活  virtualenv （如果没有激活的话）.
+
+  $ virtualenv venv
+  $ source venv/bin/activate
+  (venv) $ pip install -r requirements.txt
+
+3. 准备数据库（如果没准备好的话）。
+
+  (venv) $ FLASK_ENV=development flask shell
+
+  >>> from src.model import*
+  >>> db.create_all()
+  >>> exit()
+
+4. 运行 flask。
+
+  (venv) $ FLASK_ENV=development flask run
