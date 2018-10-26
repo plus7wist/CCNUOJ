@@ -1,5 +1,4 @@
-from .common import *
-
+from config.common import *
 
 SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
 
@@ -7,3 +6,7 @@ SQLALCHEMY_ECHO = True
 
 CCNU_AUTH_TOKEN_SECRET_KEY = 'TEST_AUTH_SECRET_KEY'
 CCNU_SERVER_FIXED_SALT = 'CCNU_TEST_SERVER_SALT'
+
+import logging
+
+LOGGING_LEVEL = logging.INFO
