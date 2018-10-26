@@ -10,8 +10,8 @@
 
   (venv) $ FLASK_ENV=development flask shell
 
-  >>> from src.model import*
-  >>> db.create_all()
+  >>> from src import *
+  >>> database.create_all()
   >>> exit()
 
 4. 运行 flask。
