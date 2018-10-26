@@ -1,5 +1,3 @@
-from config.common import *
-
 SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
 
 SQLALCHEMY_ECHO = True

@@ -1,17 +1,15 @@
 import datetime
 from flask import g
 
-from .util import get_request_json, to_json
+from .util import get_request_json
 from .util import http
 from .global_obj import database as db
 from .global_obj import blueprint as bp
-from .model import JudgeCommand, JudgeRequest, JudgeScheme
-from .model import Submission, Problem, Language
+from .model import JudgeCommand, JudgeRequest
 from .authentication import require_authentication
 
 
-def auto_create_for_submission(
-        submission: Submission,
+def create_for_judge_request(
         judge_request: JudgeRequest
 ) -> JudgeCommand:
     current_datetime = datetime.datetime.now()
@@ -22,16 +20,9 @@ def auto_create_for_submission(
     command.createTime = current_datetime
     command.fetched = False
 
-    problem = Problem.query.get(submission.problem)
-    judge_scheme = JudgeScheme.query.get(problem.judgeScheme)
-    language = Language.query.get(submission.language)
-
     command.command = {
-        "type": "CodeJudge",
-        "judgeRequest": judge_request.id,
-        "judgeSchemeShortName": judge_scheme.shortName,
-        "language": language.shortName,
-        "code": submission.text
+        "type": "JudgeRequest",
+        "judgeRequestID": judge_request.id,
     }
 
     db.session.add(command)
@@ -58,10 +49,7 @@ def get_unfetched_command(limit: int):
             obj[key] = getattr(command, key)
         result.append(obj)
 
-    return to_json({
-        "status": "Success",
-        "result": result
-    })
+    return http.Success(result=result)
 
 
 @bp.route("/judge_command/<int:id>/fetched", methods=["POST"])
@@ -70,26 +58,19 @@ def mark_command_fetched(id: int):
     command = JudgeCommand.query.get(id)
 
     if command is None:
-        raise http.NotFound(body={
-            "status": "Failed",
-            "reason": "JudgeCommandNotFound"
-        })
+        raise http.NotFound(reason="JudgeCommandNotFound")
     else:
         if command.fetchTime is None:
             command.fetchTime = g.request_datetime
             db.session.commit()
-            return to_json({
-                "status": "Success",
-                "fetchTime": command.fetchTime
-            })
+            return http.Success(fetchTime=command.fetchTime)
         else:
-            raise http.Gone(body={
-                "status": "Failed",
-                "reason": "JudgeCommandAlreadyFetched",
-                "detail": {
+            raise http.Gone(
+                reason="JudgeCommandAlreadyFetched",
+                detail={
                     "fetchTime": command.fetchTime
                 }
-            })
+            )
 
 
 @bp.route("/judge_command/<int:id>/finished", methods=["POST"])
@@ -111,21 +92,16 @@ def mark_command_finished(id: int):
 
     command = JudgeCommand.query.get(id)
     if command is None:
-        raise http.NotFound(body={
-            "status": "Failed",
-            "reason": "JudgeCommandNotFound"
-        })
+        raise http.NotFound(reason="JudgeCommandNotFound")
     elif command.fetchTime is None:
-        raise http.Conflict(body={
-            "status": "Failed",
-            "reason": "JudgeCommandNotFetched"
-        })
+        raise http.Conflict(reason="JudgeCommandNotFetched")
     elif command.finishTime is not None:
-        raise http.Gone(body={
-            "status": "Failed",
-            "reason": "JudgeCommandAlreadyFinished",
-            "finishTime": command.finishTime
-        })
+        raise http.Gone(
+            reason="JudgeCommandAlreadyFinished",
+            detail={
+                "finishTime": command.finishTime
+            }
+        )
     else:
         command.finishTime = g.request_datetime
         command.result = instance["result"]
@@ -134,7 +110,4 @@ def mark_command_finished(id: int):
         request.finishTime = g.request_datetime
 
         db.session.commit()
-        return to_json({
-            "status": "Success",
-            "finishTime": request.finishTime
-        })
+        return http.Success(finishTime=request.finishTime)

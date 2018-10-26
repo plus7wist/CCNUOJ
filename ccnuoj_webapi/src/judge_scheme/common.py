@@ -1,8 +1,10 @@
 from abc import abstractmethod
 from typing import Union
 
+from ..util.class_dict import ElementMeta, SubClassDict, SubClassNotFound
 
-class SchemeNotFound(Exception):
+
+class JudgeSchemeNotFound(SubClassNotFound):
     pass
 
 
@@ -12,11 +14,13 @@ class ValidationError(Exception):
         return None
 
 
-class JudgeScheme:
-    @classmethod
-    @abstractmethod
-    def get_short_name(cls) -> str:
-        pass
+class JudgeSchemeMeta(ElementMeta):
+    pass
+
+
+class JudgeScheme(metaclass=JudgeSchemeMeta):
+    short_name = None
+    supported_language = []
 
     @classmethod
     @abstractmethod
@@ -35,3 +39,6 @@ class JudgeScheme:
         :return: resolveResult
         """
         pass
+
+
+judge_scheme_dict = SubClassDict(JudgeSchemeMeta, "short_name", JudgeSchemeNotFound)
